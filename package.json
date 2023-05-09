@@ -12,12 +12,12 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "prettier": "prettier --config .prettierrc \"./**/*.{ts,tsx,js,scss}\" --write"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
@@ -47,7 +47,9 @@
     "ts-loader": "^9.2.3",
     "ts-node": "^10.0.0",
     "tsconfig-paths": "4.2.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "lint-staged": "^10.0.8",
+    "husky": "^4.2.3"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -65,5 +67,20 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,scss}": [
+      "npm run prettier",
+      "git add ."
+    ],
+    "*.{ts,tsx}": [
+      "npm run build",
+      "git add ."
+    ]
   }
 }
