@@ -76,7 +76,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,scss}": [
-      "npm run prettier && npm run lint",
+      "npm run lint",
+      "npm run prettier",
       "git add ."
     ],
     "*.{ts,tsx}": [
