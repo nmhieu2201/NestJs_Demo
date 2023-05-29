@@ -1,7 +1,7 @@
 {
-  "name": "nest-demo",
-  "version": "0.0.1",
-  "description": "",
+  "name": "ls",
+  "version": "1.1.1",
+  "description": "<p align=\"center\">   <a href=\"http://nestjs.com/\" target=\"blank\"><img src=\"https://nestjs.com/img/logo-small.svg\" width=\"200\" alt=\"Nest Logo\" /></a> </p>",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -31,8 +31,10 @@
     "jsonwebtoken": "^9.0.0",
     "module-alias": "^2.2.2",
     "mysql": "^2.18.1",
+    "mysql2": "^3.3.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
+    "slugify": "^1.6.6",
     "typeorm": "^0.3.16",
     "yarn": "^1.22.19"
   },

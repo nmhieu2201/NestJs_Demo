@@ -1,11 +1,11 @@
-import { DataSourceOptions } from 'typeorm';
+import { ConnectionOptions } from 'typeorm';
 
-const config: DataSourceOptions = {
+const config: ConnectionOptions = {
     type: 'mysql',
     host: 'localhost',
-    port: 3306,
+    port: 3308,
     username: 'root',
-    password: 'haiacous2201',
+    password: '',
     database: 'learn_nest',
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: true,
