@@ -2,7 +2,7 @@ import { UserEntity } from '@app/user/user.entity';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FollowingEntity } from './following.entity';
+import { FollowEntity } from './follow.entity';
 import { ProfileType } from './types/profile.type';
 import { ProfileResponseInterface } from './types/profileResponse.interface';
 
@@ -10,7 +10,7 @@ import { ProfileResponseInterface } from './types/profileResponse.interface';
 export class ProfileService {
     constructor(
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
-        @InjectRepository(FollowingEntity) private readonly followRepository: Repository<FollowingEntity>,
+        @InjectRepository(FollowEntity) private readonly followRepository: Repository<FollowEntity>,
     ) {}
 
     async getProfile(currentUserId: number, profileUsername: string): Promise<ProfileType> {
@@ -49,7 +49,7 @@ export class ProfileService {
         });
 
         if (!follow) {
-            const followToCreate = new FollowingEntity();
+            const followToCreate = new FollowEntity();
 
             followToCreate.followerId = currentUserId;
 
