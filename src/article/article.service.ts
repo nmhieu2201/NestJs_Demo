@@ -7,14 +7,14 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponseInterface } from './types/articleResponse.interface';
 import slugify from 'slugify';
 import { ArticlesReponseInterface } from './types/articlesResponse.interface';
-import { FollowingEntity } from '@app/profile/following.entity';
+import { FollowEntity } from '@app/profile/follow.entity';
 
 @Injectable()
 export class ArticleService {
     constructor(
         @InjectRepository(ArticleEntity) private readonly articleRepository: Repository<ArticleEntity>,
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
-        @InjectRepository(FollowingEntity) private readonly followingRepository: Repository<FollowingEntity>,
+        @InjectRepository(FollowEntity) private readonly followRepository: Repository<FollowEntity>,
     ) {}
 
     async addArticleToFavourite(slug: string, currentUserId: number): Promise<ArticleEntity> {
@@ -84,7 +84,7 @@ export class ArticleService {
     }
 
     async getFeed(currentUserId: number, query: any): Promise<ArticlesReponseInterface> {
-        const follows = await this.followingRepository.find({ where: { followerId: currentUserId } });
+        const follows = await this.followRepository.find({ where: { followerId: currentUserId } });
 
         if (follows.length === 0) {
             return {
