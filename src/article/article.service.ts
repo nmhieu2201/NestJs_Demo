@@ -7,12 +7,14 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponseInterface } from './types/articleResponse.interface';
 import slugify from 'slugify';
 import { ArticlesReponseInterface } from './types/articlesResponse.interface';
+import { FollowingEntity } from '@app/profile/following.entity';
 
 @Injectable()
 export class ArticleService {
     constructor(
         @InjectRepository(ArticleEntity) private readonly articleRepository: Repository<ArticleEntity>,
         @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
+        @InjectRepository(FollowingEntity) private readonly followingRepository: Repository<FollowingEntity>,
     ) {}
 
     async addArticleToFavourite(slug: string, currentUserId: number): Promise<ArticleEntity> {
@@ -29,6 +31,29 @@ export class ArticleService {
             user.favourites.push(article);
 
             article.favouritesCount++;
+
+            await this.userRepository.save(user);
+
+            await this.articleRepository.save(article);
+        }
+
+        return article;
+    }
+
+    async deleteArticleFromFavourite(slug: string, currentUserId: number): Promise<ArticleEntity> {
+        const article = await this.findBySlug(slug);
+
+        const user = await this.userRepository.findOne({
+            where: { id: currentUserId },
+            relations: ['favourites'],
+        });
+
+        const articleIndex = user.favourites.findIndex((_article) => _article.id === article.id);
+
+        if (articleIndex >= 0) {
+            user.favourites.splice(articleIndex, 1);
+
+            article.favouritesCount--;
 
             await this.userRepository.save(user);
 
@@ -58,8 +83,42 @@ export class ArticleService {
         return await this.articleRepository.save(article);
     }
 
+    async getFeed(currentUserId: number, query: any): Promise<ArticlesReponseInterface> {
+        const follows = await this.followingRepository.find({ where: { followerId: currentUserId } });
+
+        if (follows.length === 0) {
+            return {
+                articles: [],
+                articlesCount: 0,
+            };
+        }
+
+        const followingUserIds = follows.map((f) => f.followingId);
+
+        const queryBuilder = this.articleRepository
+            .createQueryBuilder('articles')
+            .leftJoinAndSelect('articles.author', 'author')
+            .where('articles.author.id IN (:...ids)', { ids: followingUserIds });
+
+        queryBuilder.orderBy('articles.createdAt', 'DESC');
+
+        const articlesCount = await queryBuilder.getCount();
+
+        if (query.limit) {
+            queryBuilder.limit(query.limit);
+        }
+
+        if (query.offset) {
+            queryBuilder.offset(query.offset);
+        }
+
+        const articles = await queryBuilder.getMany();
+
+        return { articles, articlesCount };
+    }
+
     async findAll(currentUserId: number, query: any): Promise<ArticlesReponseInterface> {
-        const queryBuilder = await this.articleRepository.createQueryBuilder('articles').leftJoinAndSelect('articles.author', 'author');
+        const queryBuilder = this.articleRepository.createQueryBuilder('articles').leftJoinAndSelect('articles.author', 'author');
 
         const articles = await queryBuilder.getMany();
 
@@ -83,6 +142,18 @@ export class ArticleService {
             });
         }
 
+        if (query.favourited) {
+            const author = await this.userRepository.findOne({ where: { username: query.favourited }, relations: ['favourites'] });
+
+            const ids = author.favourites.map((el) => el.id);
+
+            if (ids.length > 0) {
+                queryBuilder.andWhere('articles.authorId IN (:...ids)', { ids });
+            } else {
+                queryBuilder.andWhere('1=0');
+            }
+        }
+
         queryBuilder.orderBy('articles.createdAt', 'ASC');
 
         if (query.offset) {
@@ -91,8 +162,22 @@ export class ArticleService {
 
         const articlesCount = await queryBuilder.getCount();
 
+        let favouriteIds: number[] = [];
+
+        if (currentUserId) {
+            const currentUser = await this.userRepository.findOne({ where: { id: currentUserId }, relations: ['favourites'] });
+
+            favouriteIds = currentUser.favourites.map((favourite) => favourite.id);
+        }
+
+        const articlesWithFavourited = articles.map((article) => {
+            const favourited = favouriteIds.includes(article.id);
+
+            return { ...article, favourited };
+        });
+
         return {
-            articles,
+            articles: articlesWithFavourited,
             articlesCount,
         };
     }

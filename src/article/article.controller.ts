@@ -1,7 +1,8 @@
+import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 import { User } from '@app/user/decorators/user.decorator';
 import { AuthGuard } from '@app/user/guards/auth.guard';
 import { UserEntity } from '@app/user/user.entity';
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponseInterface } from './types/articleResponse.interface';
@@ -16,8 +17,15 @@ export class ArticleControler {
         return await this.articleService.findAll(currentUserId, query);
     }
 
+    @Get('feed')
+    @UseGuards(AuthGuard)
+    async getFeed(@User('id') currentUserId: number, @Query() query: any): Promise<ArticlesReponseInterface> {
+        return await this.articleService.getFeed(currentUserId, query);
+    }
+
     @Post()
     @UseGuards(AuthGuard)
+    @UsePipes(new BackendValidationPipe())
     async create(@User() currentUser: UserEntity, @Body('article') createArticleDto: CreateArticleDto): Promise<ArticleResponseInterface> {
         const article = await this.articleService.createArticle(currentUser, createArticleDto);
         return this.articleService.buildArticleResponse(article);
@@ -38,7 +46,7 @@ export class ArticleControler {
 
     @Put(':slug')
     @UseGuards(AuthGuard)
-    @UsePipes(new ValidationPipe())
+    @UsePipes(new BackendValidationPipe())
     async updateArticle(
         @User('id') currentUserId: number,
         @Param('slug') slug: string,
@@ -53,6 +61,14 @@ export class ArticleControler {
     @UseGuards(AuthGuard)
     async addArticleToFavourite(@User('id') currentUserId: number, @Param('slug') slug: string): Promise<ArticleResponseInterface> {
         const article = await this.articleService.addArticleToFavourite(slug, currentUserId);
+
+        return this.articleService.buildArticleResponse(article);
+    }
+
+    @Delete(':slug/favourite')
+    @UseGuards(AuthGuard)
+    async deleteArticleFromFavourite(@User('id') currentUserId: number, @Param('slug') slug: string): Promise<ArticleResponseInterface> {
+        const article = await this.articleService.deleteArticleFromFavourite(slug, currentUserId);
 
         return this.articleService.buildArticleResponse(article);
     }
